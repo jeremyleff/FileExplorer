@@ -6,28 +6,38 @@ using System.Net.Http;
 using System.Web.Http;
 using System.IO;
 using System.Web;
+using System.Diagnostics;
 
 namespace FileExplorer.Controllers
 {
     
     public class FolderController : ApiController
     {
-        public IEnumerable<FolderPath> Get()
+        public IEnumerable<FolderPath> Get(string path)
         {
             List<FolderPath> folders = new List<FolderPath>();
-            DirectoryInfo dirInfo = new DirectoryInfo(@"C:\Users\leffj\Music\");
+            string dir = @"C:\Users\jml0007\Documents\Visual Studio 2013\Projects\FileExplorer\FileExplorer\media\" + System.Net.WebUtility.UrlDecode(path);
+            DirectoryInfo dirInfo = new DirectoryInfo(dir);
 
-            foreach (DirectoryInfo dInfo in dirInfo.GetDirectories())
+            if (dirInfo.Exists)
             {
-                folders.Add(new FolderPath() { path = @"\" + dInfo.Name });
-            }
+                foreach (DirectoryInfo dInfo in dirInfo.GetDirectories())
+                {
+                    folders.Add(new FolderPath() { path = @"\" + dInfo.Name, name = dInfo.Name });
+                }
 
-            return folders.ToList();
+                return folders.ToList();
+            }
+            else
+            {
+                throw new HttpResponseException(HttpStatusCode.NotFound);
+            }
         }
 
         public class FolderPath
         {
             public string path { get; set; }
+            public string name { get; set; }
         }
     }
     
@@ -36,13 +46,16 @@ namespace FileExplorer.Controllers
         public IEnumerable<FilePath> Get(string path)
         {
             List<FilePath> files = new List<FilePath>();
-            DirectoryInfo dirInfo = new DirectoryInfo(@"C:\Users\leffj\Music\" + path);
+            string root = @"C:\Users\jml0007\Documents\Visual Studio 2013\Projects\FileExplorer\FileExplorer\media\";
+            string localpath = System.Net.WebUtility.UrlDecode(path);
+            string dir = root + localpath;
+            DirectoryInfo dirInfo = new DirectoryInfo(dir);
 
             if (dirInfo.Exists)
             {
                 foreach (FileInfo fInfo in dirInfo.GetFiles())
                 {
-                    files.Add(new FilePath() { path = @"\" + fInfo.Name });
+                    files.Add(new FilePath() { path = "/media/" + localpath + "/" + fInfo.Name, name = fInfo.Name });
                 }
 
                 return files.ToList();
@@ -51,12 +64,12 @@ namespace FileExplorer.Controllers
             {
                 throw new HttpResponseException(HttpStatusCode.NotFound);
             }
-
         }
         
         public class FilePath
         {
             public string path { get; set; }
+            public string name { get; set; }
         }
 
         // GET: api/File/5
